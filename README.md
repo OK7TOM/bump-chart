@@ -69,7 +69,7 @@ The chart expects the following data columns:
 ## 👨‍💻 Author
 
 **Tomáš Mudroch**  
-Customized and extended the original Deneb bump chart by [Kerry Kolosko](https://vega.github.io/vega-lite/examples/bump_chart.html).
+Customized and extended the original Deneb bump chart by [Kerry Kolosko](https://kerrykolosko.com/portfolio/bump-chart/).
 
 ---
 
