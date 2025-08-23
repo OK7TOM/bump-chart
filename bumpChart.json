@@ -68,7 +68,7 @@
     {
       "name": "dataset"
     },
-    /* keep your neighbors if you still want them for other logic */
+    
     {
       "name": "dataset_with_neighbors",
       "source": "dataset",
@@ -97,7 +97,7 @@
         }
       ]
     },
-    /* create keyed view for lookup */
+    
     {
       "name": "dataset_keys",
       "source": "dataset",
@@ -109,12 +109,12 @@
         }
       ]
     },
-    /* create edges only for consecutive weeks within the same FOND */
+    
     {
       "name": "edges",
       "source": "dataset_keys",
       "transform": [
-        /* in case Week is a string, coerce to number first */
+
         {
           "type": "formula",
           "as": "WeekNum",
@@ -134,7 +134,7 @@
           ],
           "as": [
             "next"
-          ] /* keep full row of the next week */
+          ] 
         },
         {
           "type": "filter",
@@ -142,7 +142,7 @@
         }
       ]
     },
-    /* Your other helper datasets (unchanged) */
+
     {
       "name": "ranked_latest",
       "source": "dataset",
@@ -295,7 +295,7 @@
     }
   ],
   "marks": [
-    /* Draw only edges that are truly consecutive */
+
     {
       "type": "rule",
       "from": {
@@ -338,7 +338,7 @@
         }
       }
     },
-    /* Keep your symbols per point */
+
     {
       "type": "group",
       "from": {
@@ -384,10 +384,9 @@
               "opacity": {
                 "value": 1
               },
-              "tooltip": {
-                "signal": "{Rank: datum['__3__'], Week: datum['__1__'], FOND: datum[\\'__2__\\'], Amount: format(datum[\\'__4__\\'], ',.0f')}"
-              }
-              ///"tooltip": { "signal": "datum" }
+              "tooltip": {"signal": "{'Rank': datum['__3__'], 'Week': datum['__1__'], 'Category': datum['__2__'], 'Amount': format(datum['__4__'], ',.0f')}"}
+
+
             }
           }
         },
