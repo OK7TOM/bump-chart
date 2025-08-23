@@ -1,0 +1,433 @@
+{
+  "usermeta": {
+    "information": {
+      "uuid": "50d657bf-89f4-402e-b2ad-3e1bde2b8624",
+      "generated": "2025-08-22T12:19:32.504Z",
+      "previewImageBase64PNG": "",
+      "name": "BumpChart",
+      "description": "Customized Kerry Kolosko’s Deneb bump chart: switched to Vega for proper line rendering, added tooltip fields, light-opacity point edges, visible axes, rank on Y-axis, and category labels centered on points.",
+      "author": "Tomáš Mudroch"
+    },
+    "deneb": {
+      "build": "1.8.1.0",
+      "metaVersion": 1,
+      "provider": "vega",
+      "providerVersion": "6.1.2"
+    },
+    "interactivity": {
+      "tooltip": true,
+      "contextMenu": true,
+      "selection": false,
+      "selectionMode": "simple",
+      "highlight": false,
+      "dataPointLimit": 50
+    },
+    "config": "{\n  \"autosize\": {\n    \"contains\": \"padding\",\n    \"type\": \"fit\"\n  }\n}",
+    "dataset": [
+      {
+        "key": "__0__",
+        "name": "Week",
+        "description": "",
+        "kind": "column",
+        "type": "numeric"
+      },
+      {
+        "key": "__1__",
+        "name": "YearWeek",
+        "description": "",
+        "kind": "column",
+        "type": "text"
+      },
+      {
+        "key": "__2__",
+        "name": "Category",
+        "description": "",
+        "kind": "column",
+        "type": "text"
+      },
+      {
+        "key": "__3__",
+        "name": "FondRank",
+        "description": "",
+        "kind": "measure",
+        "type": "numeric"
+      },
+      {
+        "key": "__4__",
+        "name": "Amount",
+        "description": "",
+        "kind": "measure",
+        "type": "numeric"
+      }
+    ]
+  },
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 1200,
+  "height": 700,
+  "data": [
+    {
+      "name": "dataset"
+    },
+    /* keep your neighbors if you still want them for other logic */
+    {
+      "name": "dataset_with_neighbors",
+      "source": "dataset",
+      "transform": [
+        {
+          "type": "window",
+          "groupby": [
+            "__2__"
+          ],
+          "sort": {
+            "field": "__0__",
+            "order": "ascending"
+          },
+          "ops": [
+            "lag",
+            "lead"
+          ],
+          "fields": [
+            "__0__",
+            "__0__"
+          ],
+          "as": [
+            "prevWeek",
+            "nextWeek"
+          ]
+        }
+      ]
+    },
+    /* create keyed view for lookup */
+    {
+      "name": "dataset_keys",
+      "source": "dataset",
+      "transform": [
+        {
+          "type": "formula",
+          "as": "joinKey",
+          "expr": "datum['__2__'] + '|' + datum['__0__']"
+        }
+      ]
+    },
+    /* create edges only for consecutive weeks within the same FOND */
+    {
+      "name": "edges",
+      "source": "dataset_keys",
+      "transform": [
+        /* in case Week is a string, coerce to number first */
+        {
+          "type": "formula",
+          "as": "WeekNum",
+          "expr": "toNumber(datum['__0__'])"
+        },
+        {
+          "type": "formula",
+          "as": "nextJoinKey",
+          "expr": "datum['__2__'] + '|' + (datum['__0__']Num + 1)"
+        },
+        {
+          "type": "lookup",
+          "from": "dataset_keys",
+          "key": "joinKey",
+          "fields": [
+            "nextJoinKey"
+          ],
+          "as": [
+            "next"
+          ] /* keep full row of the next week */
+        },
+        {
+          "type": "filter",
+          "expr": "datum.next != null"
+        }
+      ]
+    },
+    /* Your other helper datasets (unchanged) */
+    {
+      "name": "ranked_latest",
+      "source": "dataset",
+      "transform": [
+        {
+          "type": "window",
+          "ops": [
+            "rank"
+          ],
+          "as": [
+            "rank"
+          ],
+          "sort": {
+            "field": "__0__",
+            "order": "descending"
+          }
+        },
+        {
+          "type": "filter",
+          "expr": "datum.rank === 1"
+        }
+      ]
+    },
+    {
+      "name": "ranked_earliest",
+      "source": "dataset",
+      "transform": [
+        {
+          "type": "window",
+          "ops": [
+            "rank"
+          ],
+          "as": [
+            "rank"
+          ],
+          "sort": {
+            "field": "__0__",
+            "order": "ascending"
+          }
+        },
+        {
+          "type": "filter",
+          "expr": "datum.rank === 1"
+        }
+      ]
+    }
+  ],
+  "scales": [
+    {
+      "name": "xscale",
+      "type": "point",
+      "domain": {
+        "data": "dataset",
+        "field": "__0__",
+        "sort": true
+      },
+      "range": "width"
+    },
+    {
+      "name": "yscale",
+      "type": "point",
+      "domain": {
+        "data": "dataset",
+        "field": "__3__",
+        "sort": true
+      },
+      "range": "height"
+    },
+    {
+      "name": "color",
+      "type": "ordinal",
+      "domain": {
+        "data": "dataset",
+        "field": "__2__",
+        "sort": true
+      },
+      "range": {
+        "scheme": "tableau10"
+      }
+    }
+  ],
+  "axes": [
+    {
+      "scale": "yscale",
+      "domain": true,
+      "domainDash": [
+        10,
+        10
+      ],
+      "orient": "left",
+      "title": "# Fondů dle objemu v CZK",
+      "titlePadding": 13,
+      "offset": 50,
+      "labelFontSize": 20,
+      "titleFontSize": 16,
+      "encode": {
+        "labels": {
+          "update": {
+            "text": {
+              "signal": "toString(datum.value) + '.'"
+            }
+          }
+        }
+      }
+    },
+    {
+      "scale": "yscale",
+      "domain": true,
+      "domainDash": [
+        10,
+        10
+      ],
+      "orient": "right",
+      "title": "# Fondů dle objemu v CZK",
+      "titlePadding": 13,
+      "offset": 50,
+      "labelFontSize": 20,
+      "titleFontSize": 16,
+      "encode": {
+        "labels": {
+          "update": {
+            "text": {
+              "signal": "toString(datum.value) + '.'"
+            }
+          }
+        }
+      }
+    },
+    {
+      "scale": "xscale",
+      "domain": true,
+      "domainDash": [
+        10,
+        10
+      ],
+      "orient": "bottom",
+      "offset": 50,
+      "labelFontSize": 15,
+      "titleFontSize": 16,
+      "labelFontWeight": "bold",
+      "encode": {
+        "labels": {
+          "update": {
+            "text": {
+              "signal": "toString(datum.value) + '. týden'"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "marks": [
+    /* Draw only edges that are truly consecutive */
+    {
+      "type": "rule",
+      "from": {
+        "data": "edges"
+      },
+      "encode": {
+        "enter": {
+          "x": {
+            "scale": "xscale",
+            "field": "__0__"
+          },
+          "y": {
+            "scale": "yscale",
+            "field": "__3__"
+          },
+          "x2": {
+            "scale": "xscale",
+            "field": "next.Week"
+          },
+          "y2": {
+            "scale": "yscale",
+            "field": "next.FondRank"
+          },
+          "stroke": {
+            "scale": "color",
+            "field": "__2__"
+          },
+          "strokeWidth": {
+            "value": 7
+          },
+          "strokeDash": {
+            "value": [
+              3,
+              3
+            ]
+          },
+          "opacity": {
+            "value": 1
+          }
+        }
+      }
+    },
+    /* Keep your symbols per point */
+    {
+      "type": "group",
+      "from": {
+        "facet": {
+          "name": "series",
+          "data": "dataset",
+          "groupby": "__2__"
+        }
+      },
+      "marks": [
+        {
+          "type": "symbol",
+          "from": {
+            "data": "series"
+          },
+          "encode": {
+            "enter": {
+              "x": {
+                "scale": "xscale",
+                "field": "__0__"
+              },
+              "y": {
+                "scale": "yscale",
+                "field": "__3__"
+              },
+              "size": {
+                "value": 4700
+              },
+              "fill": {
+                "scale": "color",
+                "field": "__2__"
+              },
+              "stroke": {
+                "scale": "color",
+                "field": "__2__"
+              },
+              "strokeWidth": {
+                "value": 13
+              },
+              "strokeOpacity": {
+                "value": 0.3
+              },
+              "opacity": {
+                "value": 1
+              },
+              "tooltip": {
+                "signal": "{Rank: datum['__3__'], Week: datum['__1__'], FOND: datum[\\'__2__\\'], Amount: format(datum[\\'__4__\\'], ',.0f')}"
+              }
+              ///"tooltip": { "signal": "datum" }
+            }
+          }
+        },
+        {
+          "type": "text",
+          "from": {
+            "data": "series"
+          },
+          "encode": {
+            "enter": {
+              "x": {
+                "scale": "xscale",
+                "field": "__0__"
+              },
+              "y": {
+                "scale": "yscale",
+                "field": "__3__"
+              },
+              "text": {
+                "field": "__2__"
+              },
+              "fontSize": {
+                "value": 15
+              },
+              "fontWeight": {
+                "value": "bold"
+              },
+              "fill": {
+                "value": "white"
+              },
+              "align": {
+                "value": "center"
+              },
+              "baseline": {
+                "value": "middle"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
